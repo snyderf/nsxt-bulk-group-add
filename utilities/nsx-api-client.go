@@ -3,7 +3,7 @@ package utilities
 import (
 	"fmt"
 
-	//"nsxt-bulk-group-add"
+	"nsxt-bulk-group-add/nsxt"
 )
 
 func providerConnectivityCheck(nsxClient *nsxt.APIClient) error {

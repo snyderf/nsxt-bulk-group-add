@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"nsxt-bulk-group-add/nsxt"
 	"nsxt-bulk-group-add/nsxt/model"
+	"strings"
 )
 
 func AddIPGroups(nsxPolicy *nsxt.APIClient, apps []IpApps) {
-	
+
 	var effectiveGroups []string
-	var uniqueGroups[] string
+	var uniqueGroups []string
 
 	for _, app := range apps {
 		effectiveGroups = append(effectiveGroups, app.App)
@@ -28,29 +29,31 @@ func AddIPGroups(nsxPolicy *nsxt.APIClient, apps []IpApps) {
 			uniqueGroups = append(uniqueGroups, eg)
 		}
 	}
-	
+
 	for _, ua := range uniqueGroups {
 		var includedIPs []string
 
 		for _, app := range apps {
-			if (app.App == ua) {
-				includedIPs = append(includedIPs,app.IP)	
+			if app.App == ua {
+				includedIPs = append(includedIPs, app.IP)
 			}
-			
-		}
-				
-		ipExp := []model.Expression{{
-			IpAddresses: includedIPs,
-			ResourceType: "IPAddressExpression",
-		}}
-	
-		ipGroup := model.Group {
-			DisplayName: ua,
-			Expression: ipExp,
+
 		}
 
-		ipGroup, resp, err := nsxPolicy.PolicyInventoryGroupsApi.UpdateGroupForDomain(nsxPolicy.Context, "default", ua, ipGroup)
-		if (err != nil) {
+		ipExp := []model.Expression{{
+			IpAddresses:  includedIPs,
+			ResourceType: "IPAddressExpression",
+		}}
+
+		ipGroup := model.Group{
+			DisplayName: ua,
+			Expression:  ipExp,
+		}
+
+		ua_id := strings.Replace(ua, " ", "_", -1)
+
+		ipGroup, resp, err := nsxPolicy.PolicyInventoryGroupsApi.UpdateGroupForDomain(nsxPolicy.Context, "default", ua_id, ipGroup)
+		if err != nil {
 			fmt.Println(resp)
 			panic(err)
 		} else {
@@ -70,8 +73,8 @@ func AddVMTiers(nsxPolicy *nsxt.APIClient, nsxClient *nsxt.APIClient, vmTierConf
 	for _, vmTier := range vmTierConfig {
 		effectiveTiers = append(effectiveTiers, vmTier.Tier)
 	}
-	
-	//Determine the unique tiers 
+
+	//Determine the unique tiers
 	for _, et := range effectiveTiers {
 		skip := false
 		for _, ut := range uniqueTiers {
@@ -86,11 +89,11 @@ func AddVMTiers(nsxPolicy *nsxt.APIClient, nsxClient *nsxt.APIClient, vmTierConf
 	}
 	//Generate a list of VMs and thier associated externalIDs
 	vmList, resp, err := nsxClient.FabricVirtualMachinesApi.ListVirtualMachines(nsxClient.Context, nil)
-	if (err != nil) {
+	if err != nil {
 		fmt.Println(resp)
 		panic(err)
 	}
-	
+
 	//Iterate through the unique Tier Instances and add VMs to the appropriate Tier
 	for _, ut := range uniqueTiers {
 		//Instantiate the extIDs variable during each iteration of the loop
@@ -98,8 +101,8 @@ func AddVMTiers(nsxPolicy *nsxt.APIClient, nsxClient *nsxt.APIClient, vmTierConf
 		for _, tierVM := range vmTierConfig {
 			if tierVM.Tier == ut {
 				for _, vm := range vmList.Results {
-					fmt.Println(vm.DisplayName,tierVM.VM)
-					if (tierVM.VM == vm.DisplayName) {
+					fmt.Println(vm.DisplayName, tierVM.VM)
+					if tierVM.VM == vm.DisplayName {
 						fmt.Println(vm.DisplayName, vm.ExternalId)
 						extIDs = append(extIDs, vm.ExternalId)
 						break
@@ -107,23 +110,24 @@ func AddVMTiers(nsxPolicy *nsxt.APIClient, nsxClient *nsxt.APIClient, vmTierConf
 				}
 			}
 		}
-		
+
 		fmt.Println(extIDs)
 
 		exp := []model.Expression{{
-			ExternalIds: extIDs,
-			MemberType: "VirtualMachine",
+			ExternalIds:  extIDs,
+			MemberType:   "VirtualMachine",
 			ResourceType: "ExternalIDExpression",
 		}}
-	
-	
-		newGroup := model.Group {
+
+		newGroup := model.Group{
 			DisplayName: ut,
-			Expression: exp,
+			Expression:  exp,
 		}
-	
-		newGroup, resp, err = nsxPolicy.PolicyInventoryGroupsApi.UpdateGroupForDomain(nsxPolicy.Context, "default", ut, newGroup)
-		if (err != nil) {
+
+		ut_id := strings.Replace(ut, " ", "_", -1)
+
+		newGroup, resp, err = nsxPolicy.PolicyInventoryGroupsApi.UpdateGroupForDomain(nsxPolicy.Context, "default", ut_id, newGroup)
+		if err != nil {
 			fmt.Println(resp)
 			panic(err)
 		}
@@ -134,7 +138,7 @@ func AddVMTiers(nsxPolicy *nsxt.APIClient, nsxClient *nsxt.APIClient, vmTierConf
 	return tiers
 }
 
-func AddAppGroups(nsxPolicy *nsxt.APIClient, vmAppConfig []VmApps, tiers []model.Group){
+func AddAppGroups(nsxPolicy *nsxt.APIClient, vmAppConfig []VmApps, tiers []model.Group) {
 	var effectiveGroups []string
 	var uniqueGroups []string
 
@@ -163,25 +167,26 @@ func AddAppGroups(nsxPolicy *nsxt.APIClient, vmAppConfig []VmApps, tiers []model
 		for _, appTier := range vmAppConfig {
 			if appTier.App == ug {
 				for _, ag := range tiers {
-					if ag.Id == appTier.Tier {
+					if ag.DisplayName == appTier.Tier {
 						paths = append(paths, ag.Path)
 					}
 				}
-			} 
+			}
 		}
 		exp := []model.Expression{{
-			Paths: 			paths,
-			ResourceType: 	"PathExpression",
+			Paths:        paths,
+			ResourceType: "PathExpression",
 		}}
-	
-	
-		newGroup := model.Group {
+
+		newGroup := model.Group{
 			DisplayName: ug,
-			Expression: exp,
+			Expression:  exp,
 		}
 
-		newGroup, resp, err := nsxPolicy.PolicyInventoryGroupsApi.UpdateGroupForDomain(nsxPolicy.Context, "default", ug, newGroup)
-		if (err != nil) {
+		ug_id := strings.Replace(ug, " ", "_", -1)
+
+		newGroup, resp, err := nsxPolicy.PolicyInventoryGroupsApi.UpdateGroupForDomain(nsxPolicy.Context, "default", ug_id, newGroup)
+		if err != nil {
 			fmt.Println(resp)
 			panic(err)
 		}

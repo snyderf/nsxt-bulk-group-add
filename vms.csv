@@ -1,8 +1,8 @@
-cust-app,cust-web-tier,Web01
-cust-app,cust-web-tier,Web02
-cust-app,cust-app-tier,App01
-cust-app,cust-app-tier,App02
-cust-app,cust-db-tier,DB01
+cust-app,cust web-tier,Web01
+cust-app,cust web-tier,Web02
+cust-app,cust app-tier,App01
+cust-app,cust app-tier,App02
+cust-app,cust db-tier,DB01
 fin-app,fin-web-tier,fin-web-01a_corp.local
 fin-app,fin-app-tier,fin-app-01a_corp.local
 fin-app,fin-db-tier,fin-db-01a_corp.local

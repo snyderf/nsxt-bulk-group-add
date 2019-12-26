@@ -1,5 +1,5 @@
 hostname:     "nsx-man.virtuallyknowhere.lab"
 username:     "admin"
 password:     "VMware1!"
-vmimportfile: "none"
-ipimportfile: "ips.csv"
+vmimportfile: "vms.csv"
+ipimportfile: "none"
